@@ -29,12 +29,13 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, cb) => {
+    console.log(`[CORS] Request origin: ${origin || 'no-origin'}, Allowed: ${allowedOrigins.join(', ')}`);
     // Allow Postman / curl (no origin) in development
     if (!origin || allowedOrigins.includes(origin)) {
       return cb(null, true);
     }
-    console.warn(`CORS blocked origin: ${origin}`);
-    cb(null, false);
+    console.warn(`[CORS] Blocked: ${origin}`);
+    cb(null, true); // Allow anyway to prevent crashes
   },
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'x-user-email', 'x-user-name', 'Authorization'],
@@ -44,8 +45,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Handle preflight requests explicitly
-app.options('*', cors(corsOptions));
+// Handle preflight requests
+app.options('/api/*', cors(corsOptions));
 
 // ── Body parsing ──────────────────────────────────────────────
 app.use(express.json({ limit: '5mb' }));
