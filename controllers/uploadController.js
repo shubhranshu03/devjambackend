@@ -12,9 +12,15 @@ const uploadImage = async (req, res, next) => {
     const { email } = req.user;
     const { type } = req.body; // 'profile' or 'thumbnail'
 
-    console.log('Upload request:', { email, type, hasFile: !!req.file });
+    console.log('=== UPLOAD REQUEST ===');
+    console.log('Email:', email);
+    console.log('Type:', type);
+    console.log('Has file:', !!req.file);
+    console.log('Headers:', req.headers);
+    console.log('User:', req.user);
 
     if (!req.file) {
+      console.error('❌ No file provided');
       return res.status(400).json({ error: 'No file provided.' });
     }
 
@@ -51,22 +57,23 @@ const uploadImage = async (req, res, next) => {
       });
 
     if (error) {
-      console.error('Supabase upload error:', error);
+      console.error('❌ Supabase upload error:', error);
+      console.error('Error details:', { message: error.message, status: error.status });
       return res.status(500).json({ error: `Upload failed: ${error.message || 'Unknown error'}` });
     }
 
-    console.log('Supabase upload success:', data);
+    console.log('✅ Supabase upload success:', data);
 
     // Get public URL
     const { data: publicUrl } = supabase.storage
       .from(bucket)
       .getPublicUrl(filename);
 
-    console.log('Public URL:', publicUrl.publicUrl);
+    console.log('✅ Public URL:', publicUrl.publicUrl);
 
     res.json({ url: publicUrl.publicUrl, filename });
   } catch (err) {
-    console.error('Upload controller error:', err);
+    console.error('❌ Upload controller error:', err);
     next(err);
   }
 };
