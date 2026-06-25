@@ -20,33 +20,19 @@ const PORT = process.env.PORT || 5000;
 
 // ── CORS ──────────────────────────────────────────────────────
 // Allow requests from Next.js dev server and production domain
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'https://devjamfrontend.vercel.app',
-  process.env.FRONTEND_URL,        // set in .env for production
-].filter(Boolean);
+// ── CORS - Allow all origins in production, restrict in dev ────
+const isDev = process.env.NODE_ENV !== 'production';
 
-const corsOptions = {
-  origin: (origin, cb) => {
-    console.log(`[CORS] Request origin: ${origin || 'no-origin'}, Allowed: ${allowedOrigins.join(', ')}`);
-    // Allow Postman / curl (no origin) in development
-    if (!origin || allowedOrigins.includes(origin)) {
-      return cb(null, true);
-    }
-    console.warn(`[CORS] Blocked: ${origin}`);
-    cb(null, true); // Allow anyway to prevent crashes
-  },
+app.use(cors({
+  origin: true, // Allow all origins
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'x-user-email', 'x-user-name', 'Authorization'],
   credentials: true,
   optionsSuccessStatus: 200,
-};
+}));
 
-app.use(cors(corsOptions));
-
-// Handle preflight requests
-app.options('/api/*', cors(corsOptions));
+// Preflight handler
+app.options('*', cors());
 
 // ── Body parsing ──────────────────────────────────────────────
 app.use(express.json({ limit: '5mb' }));
