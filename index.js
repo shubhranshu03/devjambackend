@@ -20,9 +20,7 @@ const PORT = process.env.PORT || 5000;
 
 // ── CORS ──────────────────────────────────────────────────────
 // Allow requests from Next.js dev server and production domain
-// ── CORS - Allow all origins in production, restrict in dev ────
-const isDev = process.env.NODE_ENV !== 'production';
-
+// ── CORS - Allow all origins ────────────────────────────────
 app.use(cors({
   origin: true, // Allow all origins
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -30,9 +28,6 @@ app.use(cors({
   credentials: true,
   optionsSuccessStatus: 200,
 }));
-
-// Preflight handler
-app.options('*', cors());
 
 // ── Body parsing ──────────────────────────────────────────────
 app.use(express.json({ limit: '5mb' }));
