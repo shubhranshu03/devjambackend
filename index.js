@@ -23,19 +23,29 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
+  'https://devjamfrontend.vercel.app',
   process.env.FRONTEND_URL,        // set in .env for production
 ].filter(Boolean);
 
-app.use(cors({
+const corsOptions = {
   origin: (origin, cb) => {
     // Allow Postman / curl (no origin) in development
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    cb(new Error(`CORS: origin ${origin} not allowed.`));
+    if (!origin || allowedOrigins.includes(origin)) {
+      return cb(null, true);
+    }
+    console.warn(`CORS blocked origin: ${origin}`);
+    cb(null, false);
   },
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'x-user-email', 'x-user-name'],
+  allowedHeaders: ['Content-Type', 'x-user-email', 'x-user-name', 'Authorization'],
   credentials: true,
-}));
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
 
 // ── Body parsing ──────────────────────────────────────────────
 app.use(express.json({ limit: '5mb' }));
