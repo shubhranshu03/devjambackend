@@ -99,6 +99,22 @@ const createProject = async (req, res, next) => {
       return res.status(400).json({ error: 'title, tagline, and url are required.' });
     }
 
+    // Ensure user exists in database
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('email')
+      .eq('email', email)
+      .single();
+
+    if (!existingUser) {
+      // Create user if they don't exist
+      await supabase.from('users').insert([{
+        email,
+        name: name || 'Anonymous',
+        avatar_url: avatar_url || null,
+      }]);
+    }
+
     // If they uploaded a profile image during submission, update their user profile
     if (avatar_url) {
       await supabase.from('users').update({ avatar_url }).eq('email', email);
