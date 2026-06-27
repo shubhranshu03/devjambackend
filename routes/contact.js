@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { Resend } = require('resend');
+const { supabase } = require('../supabase');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const ADMIN_EMAIL = 'shubhranshukhatua@gmail.com'; // Change this to your email
@@ -172,8 +173,16 @@ router.post('/newsletter', async (req, res, next) => {
       throw new Error(`Failed to send welcome email: ${result.error.message}`);
     }
 
-    // Optionally: Store in Supabase for future campaigns
-    // You can add this later if needed
+    // Store subscriber in Supabase
+    const { error: dbError } = await supabase
+      .from('newsletter_subscribers')
+      .insert([{ email, status: 'active' }])
+      .select();
+
+    if (dbError && !dbError.message.includes('duplicate')) {
+      console.error('Supabase insert error:', dbError);
+      // Don't throw - email was sent successfully, DB error is secondary
+    }
 
     console.log(`✅ Newsletter subscriber added: ${email}`);
 
