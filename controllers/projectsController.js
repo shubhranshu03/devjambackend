@@ -357,6 +357,113 @@ async function checkBadgesForUser(email) {
   }
 }
 
+// ── GET /api/projects/leaderboard ─────────────────────────────
+// Returns top projects sorted by votes (highest first)
+const getProjectsLeaderboard = async (req, res, next) => {
+  try {
+    const { limit = 10 } = req.query;
+
+    const { data: projects, error } = await supabase
+      .from('projects')
+      .select('id, title, tagline, author_email, author_name, votes, views, thumbnail_url, created_at, status')
+      .order('votes', { ascending: false })
+      .limit(Number(limit));
+
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+
+    // Add ranking position
+    const leaderboard = (projects || []).map((project, index) => ({
+      ...project,
+      position: index + 1,
+      rank_badge: index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`,
+    }));
+
+    res.json({ 
+      projects: leaderboard,
+      total: leaderboard.length,
+      limit: Number(limit),
+    });
+  } catch (err) {
+    console.error('Leaderboard error:', err);
+    next(err);
+  }
+};
+
+// ── GET /api/projects/trending ─────────────────────────────────
+// Returns trending projects (by views in last 7 days)
+const getTrendingProjects = async (req, res, next) => {
+  try {
+    const { limit = 10 } = req.query;
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: projects, error } = await supabase
+      .from('projects')
+      .select('id, title, tagline, author_email, author_name, votes, views, thumbnail_url, created_at, status')
+      .eq('status', 'approved')
+      .gte('created_at', sevenDaysAgo)
+      .order('views', { ascending: false })
+      .limit(Number(limit));
+
+    if (error) throw error;
+
+    // Add trending position
+    const trending = projects.map((project, index) => ({
+      ...project,
+      position: index + 1,
+      rank_badge: index === 0 ? '🔥' : '⭐',
+    }));
+
+    res.json({ 
+      projects: trending,
+      total: trending.length,
+      limit: Number(limit),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ── GET /api/projects/hot ─────────────────────────────────────
+// Returns hot projects (votes + views combined score)
+const getHotProjects = async (req, res, next) => {
+  try {
+    const { limit = 10 } = req.query;
+
+    const { data: projects, error } = await supabase
+      .from('projects')
+      .select('id, title, tagline, author_email, author_name, votes, views, thumbnail_url, created_at, status')
+      .eq('status', 'approved')
+      .order('votes', { ascending: false });
+
+    if (error) throw error;
+
+    // Calculate hot score: (votes * 10) + (views * 1)
+    const hotProjects = projects
+      .map(project => ({
+        ...project,
+        hotScore: (project.votes || 0) * 10 + (project.views || 0),
+      }))
+      .sort((a, b) => b.hotScore - a.hotScore)
+      .slice(0, Number(limit))
+      .map((project, index) => ({
+        ...project,
+        position: index + 1,
+        rank_badge: index === 0 ? '⭐' : index === 1 ? '✨' : index === 2 ? '💫' : `#${index + 1}`,
+      }));
+
+    res.json({ 
+      projects: hotProjects,
+      total: hotProjects.length,
+      limit: Number(limit),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getAllProjects,
   getProjectById,
@@ -365,4 +472,7 @@ module.exports = {
   updateProject,
   deleteProject,
   voteProject,
+  getProjectsLeaderboard,
+  getTrendingProjects,
+  getHotProjects,
 };

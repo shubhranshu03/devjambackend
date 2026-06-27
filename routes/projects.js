@@ -14,20 +14,24 @@ const {
   updateProject,
   deleteProject,
   voteProject,
+  getProjectsLeaderboard,
+  getTrendingProjects,
+  getHotProjects,
 } = require('../controllers/projectsController');
 const { getComments, addComment } = require('../controllers/commentsController');
 
-// Public routes
+// ── PUBLIC ROUTES (Static paths MUST come before /:id wildcard) ──
 router.get('/',           getAllProjects);   // GET  /api/projects
+router.get('/leaderboard', getProjectsLeaderboard);  // GET /api/projects/leaderboard (by votes)
+router.get('/trending',    getTrendingProjects);     // GET /api/projects/trending (by views)
+router.get('/hot',         getHotProjects);          // GET /api/projects/hot (by combined score)
+router.get('/user/me',     requireAuth, getUserProjects); // GET /api/projects/user/me (protected)
 
-// Protected routes (require login) — MUST come before /:id wildcard
-router.get('/user/me',         requireAuth, getUserProjects); // GET  /api/projects/user/me
-
-// Public wildcard routes (after static paths)
+// ── PUBLIC WILDCARD ROUTES (After static paths) ──
 router.get('/:id',        getProjectById);  // GET  /api/projects/:id
 router.get('/:id/comments', getComments);   // GET  /api/projects/:id/comments
 
-// Other protected routes
+// ── PROTECTED ROUTES (Modifying routes) ──
 router.post('/',               requireAuth, createProject);   // POST /api/projects
 router.patch('/:id',           requireAuth, updateProject);   // PATCH /api/projects/:id
 router.delete('/:id',          requireAuth, deleteProject);   // DELETE /api/projects/:id
