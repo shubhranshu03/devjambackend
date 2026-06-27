@@ -31,11 +31,7 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid email address' });
     }
 
-    // Message length validation
-    if (message.length < 10) {
-      return res.status(400).json({ error: 'Message must be at least 10 characters long' });
-    }
-
+    // Message length validation - remove minimum, just max
     if (message.length > 5000) {
       return res.status(400).json({ error: 'Message must not exceed 5000 characters' });
     }
