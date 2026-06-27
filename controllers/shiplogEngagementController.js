@@ -58,6 +58,18 @@ exports.likeShipLog = async (req, res, next) => {
       .select('*', { count: 'exact', head: true })
       .eq('shiplog_id', shiplogId);
 
+    // Award XP to ship log author
+    const { data: shiplog } = await supabase
+      .from('shiplogs')
+      .select('user_email')
+      .eq('id', shiplogId)
+      .single();
+
+    if (shiplog && shiplog.user_email) {
+      const { addXP } = require('./xpController');
+      await addXP(shiplog.user_email, 5, 'Received a like on ship log');
+    }
+
     res.json({ message: 'Liked', likes: count || 0 });
   } catch (err) {
     next(err);

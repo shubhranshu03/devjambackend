@@ -124,6 +124,10 @@ exports.createShipLog = async (req, res, next) => {
 
     if (error) throw error;
 
+    // Award XP for creating ship log
+    const { addXP } = require('./xpController');
+    await addXP(userEmail, 25, 'Created a ship log');
+
     res.status(201).json({
       message: 'Ship log created successfully',
       shiplog: data,

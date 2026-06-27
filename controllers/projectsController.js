@@ -142,6 +142,10 @@ const createProject = async (req, res, next) => {
 
     if (error) throw error;
 
+    // Award XP for submitting project
+    const { addXP } = require('./xpController');
+    await addXP(email, 100, 'Submitted a project');
+
     // Check and award badges asynchronously (don't wait for it)
     setTimeout(() => {
       checkBadgesForUser(email).catch(err => console.error('Badge check failed:', err));
@@ -264,6 +268,19 @@ const voteProject = async (req, res, next) => {
 
     // Update project votes count
     await supabase.from('projects').update({ votes: netVotes }).eq('id', id);
+
+    // Get project author and award XP
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('author_email')
+      .eq('id', id)
+      .single();
+
+    if (!projectError && project && direction === 'up' && !existing) {
+      // Award XP to project author only for new upvotes
+      const { addXP } = require('./xpController');
+      await addXP(project.author_email, 10, 'Received a vote on project');
+    }
 
     res.json({ message: 'Vote recorded!', votes: netVotes, upVotes, downVotes });
   } catch (err) {
